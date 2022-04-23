@@ -40,7 +40,7 @@ export async function requestWalletReadAcess() {
 }
 
 
-export async function generateAirdropTransaction(tokenId: string, list: string[]) {
+export async function generateAirdropTransaction(tokenId: string, list: AddressItem[]) {
   const height = await currentHeight();
   return await sendFunds(tokenId, list, { height })
 }
@@ -67,9 +67,12 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
   console.log({have})
   console.log({need})
   let ins = []
+
+
   const keys = Object.keys(have)
 
-  const totalBalance = await loadTokensFromWallet()
+  const totalBalance = await loadTokensFromWallet();
+
   if (keys.filter(key => key !== 'ERG').filter(key => !Object.keys(totalBalance).includes(key) || totalBalance[key].amount < have[key]).length > 0) {
     throw Error('Not enough balance in the wallet!')
 
@@ -90,6 +93,7 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
       ins = ins.concat(curIns)
     }
   }
+
   if (keys.filter(key => have[key] > 0).length > 0) {
     throw Error('Not enough balance in the wallet!')
   }
@@ -143,24 +147,17 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
     fee: optimalTxFee
   }
 
-  let tx = null
-  try {
-    tx = await ergo.sign_tx(unsigned)
-    console.log("signed tx:", tx)
-  } catch (e) {
-    throw Error('Error while sending funds')
-  }
-  console.log("submitting tx:", tx)
-  const txId = await ergo.submit_tx(tx)
+  // let tx = null
+  // try {
+  //   tx = await ergo.sign_tx(unsigned)
+  //   console.log("signed tx:", tx)
+  // } catch (e) {
+  //   throw Error('Error while sending funds')
+  // }
 
-  console.log('tx id', txId)
-  if (true) {
-    if (txId !== undefined && txId.length > 0)
-      console.warn('Hold on')
-    else
-      throw Error('Error while sending funds')
-  }
-  return txId
+  // const txId = await ergo.submit_tx(tx)
+
+  return unsigned
 }
 
 
