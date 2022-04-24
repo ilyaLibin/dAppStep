@@ -1,5 +1,5 @@
 import { OptionalBlock, AddressItem, Balance, Asset, UtxoBox } from './types';
-import * as ergoRust from 'ergo-lib-wasm-browser';
+import { Address } from 'ergo-lib-wasm-browser';
 
 declare global {
   const ergo: {
@@ -41,7 +41,6 @@ export async function currentHeight() {
 }
 
 export async function sendFunds(tokenId: string, addressList: AddressItem[], block: OptionalBlock) {
-  const wasm = await ergoRust;
   const optimalTxFee = calculateOptimalFee(addressList);
   const need = {
     ERG: MIN_FEE * addressList.length + optimalTxFee,
@@ -94,7 +93,7 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
   const fundBoxes = addressList.map((item) => {
     return {
       value: MIN_FEE.toString(),
-      ergoTree: wasm.Address.from_mainnet_str(item.address).to_ergo_tree().to_base16_bytes(),
+      ergoTree: Address.from_mainnet_str(item.address).to_ergo_tree().to_base16_bytes(),
       assets: [
         {
           tokenId,
@@ -117,7 +116,7 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
 
   const changeBox = {
     value: (-have['ERG']).toString(),
-    ergoTree: wasm.Address.from_mainnet_str(await ergo.get_change_address())
+    ergoTree: Address.from_mainnet_str(await ergo.get_change_address())
       .to_ergo_tree()
       .to_base16_bytes(),
     assets: Object.keys(have)
