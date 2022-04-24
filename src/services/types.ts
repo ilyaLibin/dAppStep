@@ -1,11 +1,11 @@
 export type OptionalBlock = {
   height: number;
-}
+};
 
 export type AddressItem = {
   amount: string;
   address: string;
-}
+};
 
 export type Asset = {
   tokenId: string;
@@ -13,12 +13,12 @@ export type Asset = {
   decimals?: number;
   name: string;
   tokenType?: string;
-}
+};
 
 export type Balance = {
   nanoErgs: number;
   tokens: Asset[];
-}
+};
 
 export type UtxoBoxAsset = Omit<Asset, 'amount'> & { amount: string };
 
@@ -30,11 +30,7 @@ export type UtxoBox = {
   creationHeight: number;
   transactionId: string;
   index: number;
-}
-
-
-
-
+};
 
 /*
 {
