@@ -1,9 +1,9 @@
-import { OptionalBlock, AddressItem, Balance, Asset } from './types';
-import { Address } from 'ergo-lib-wasm-browser';
+import { OptionalBlock, AddressItem, Balance, Asset, UtxoBox } from './types';
+import * as ergoRust from "ergo-lib-wasm-browser";
 
 declare global {
   const ergo: {
-    get_utxos: Function;
+    get_utxos: (a: string, b: string) => Promise<UtxoBox[]>;
     get_change_address: Function;
     get_used_addresses: Function;
     get_unused_addresses: Function;
@@ -54,6 +54,7 @@ export async function currentHeight() {
 
 
 export async function sendFunds(tokenId: string, addressList: AddressItem[], block: OptionalBlock) {
+  const wasm = await ergoRust;
   const optimalTxFee = calculateOptimalFee(addressList)
   const need = {
     ERG: MIN_FEE * addressList.length + optimalTxFee,
@@ -66,7 +67,7 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
 
   console.log({have})
   console.log({need})
-  let ins = []
+  let boxes: UtxoBox[] = [];
 
 
   const keys = Object.keys(have)
@@ -80,17 +81,17 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
 
   for (let i = 0; i < keys.length; i++) {
     if (have[keys[i]] <= 0) continue
-    const curIns = await ergo.get_utxos(have[keys[i]].toString(), keys[i]);
-    if (curIns !== undefined) {
-      curIns.forEach(bx => {
+    const currentBoxes = await ergo.get_utxos(have[keys[i]].toString(), keys[i]);
+    if (currentBoxes !== undefined) {
+      currentBoxes.forEach(bx => {
         have['ERG'] -= parseInt(bx.value)
-        bx.assets.forEach(ass => {
-          if (!Object.keys(have).includes(ass.tokenId)) have[ass.tokenId] = 0
-          console.log(ass.name, have[ass.tokenId], ass.amount)
-          have[ass.tokenId] -= parseInt(ass.amount)
+        bx.assets.forEach(asset => {
+          if (!Object.keys(have).includes(asset.tokenId)) have[asset.tokenId] = 0
+          console.log(asset.name, have[asset.tokenId], asset.amount)
+          have[asset.tokenId] -= parseInt(asset.amount)
         })
       })
-      ins = ins.concat(curIns)
+      boxes = boxes.concat(currentBoxes)
     }
   }
 
@@ -101,7 +102,7 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
   const fundBoxes = addressList.map(item => {
     return {
       value: MIN_FEE.toString(),
-      ergoTree: Address.from_mainnet_str(item.address).to_ergo_tree().to_base16_bytes(),
+      ergoTree: wasm.Address.from_mainnet_str(item.address).to_ergo_tree().to_base16_bytes(),
       assets: [{
         tokenId,
         amount: item.amount.toString()
@@ -122,7 +123,7 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
 
   const changeBox = {
     value: (-have['ERG']).toString(),
-    ergoTree: Address.from_mainnet_str(await ergo.get_change_address()).to_ergo_tree().to_base16_bytes(),
+    ergoTree: wasm.Address.from_mainnet_str(await ergo.get_change_address()).to_ergo_tree().to_base16_bytes(),
     assets: Object.keys(have).filter(key => key !== 'ERG')
       .filter(key => have[key] < 0)
       .map(key => {
@@ -136,9 +137,9 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
   }
 
   const unsigned = {
-    inputs: ins.map(curIn => {
+    inputs: boxes.map(box => {
       return {
-        ...curIn,
+        ...box,
         extension: {}
       }
     }),

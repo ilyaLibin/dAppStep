@@ -9,6 +9,7 @@
     "js",
     "jsx",
     "json",
-    "node"
+    "node",
+    "wasm"
   ]
 }
