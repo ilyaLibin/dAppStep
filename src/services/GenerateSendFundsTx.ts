@@ -63,7 +63,9 @@ export async function sendFunds(tokenId: string, addressList: AddressItem[], blo
   if (
     keys
       .filter((key) => key !== 'ERG')
-      .filter((key) => !Object.keys(totalBalance).includes(key) || totalBalance[key].amount < have[key]).length > 0
+      .filter(
+        (key) => !Object.keys(totalBalance).includes(key) || totalBalance[key].amount < have[key],
+      ).length > 0
   ) {
     throw Error('Not enough balance in the wallet!');
   }
@@ -161,7 +163,9 @@ interface Dic {
 }
 
 export async function loadTokensFromWallet() {
-  const addresses: string[] = (await ergo.get_used_addresses()).concat(await ergo.get_unused_addresses());
+  const addresses: string[] = (await ergo.get_used_addresses()).concat(
+    await ergo.get_unused_addresses(),
+  );
   const tokens: Dic = {};
 
   for (let i = 0; i < addresses.length; i++) {
@@ -181,9 +185,9 @@ export async function loadTokensFromWallet() {
 }
 
 export async function getBalance(addr: string): Promise<Balance> {
-  return await fetch(`https://api.ergoplatform.com/api/v1/addresses/${addr}/balance/confirmed`).then((res) =>
-    res.json(),
-  );
+  return await fetch(
+    `https://api.ergoplatform.com/api/v1/addresses/${addr}/balance/confirmed`,
+  ).then((res) => res.json());
 }
 
 export function calculateOptimalFee(addressList: AddressItem[]) {
